@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HR Dashboard Pro</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+    background:#eef2f7;
+    font-family:Arial;
+}
+
+.header{
+    background:#0d6efd;
+    color:white;
+    padding:20px;
+    text-align:center;
+    font-weight:bold;
+    font-size:22px;
+}
+
+.box{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    margin-top:20px;
+    box-shadow:0px 0px 10px rgba(0,0,0,0.1);
+}
+
+.card-box{
+    padding:15px;
+    color:white;
+    border-radius:12px;
+    text-align:center;
+}
+
+.bg1{background:#198754;}
+.bg2{background:#dc3545;}
+.bg3{background:#fd7e14;}
+.bg4{background:#6610f2;}
+
+table{
+    text-align:center;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">HR MANAGEMENT SYSTEM - PRO DASHBOARD</div>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+<div class="row mt-4 g-3">
+
+<div class="col-md-3">
+<div class="card-box bg1">
+<h3 id="empCount">0</h3>
+<p>Employees</p>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box bg2">
+<h3 id="totalSalary">₹0</h3>
+<p>Total Salary</p>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box bg3">
+<h3 id="presentCount">0</h3>
+<p>Present</p>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box bg4">
+<h3 id="absentCount">0</h3>
+<p>Absent</p>
+</div>
+</div>
+
+</div>
+
+<!-- ADD EMPLOYEE -->
+<div class="box">
+
+<h5>Add Employee</h5>
+
+<div class="row g-2">
+
+<div class="col-md-3">
+<input id="name" class="form-control" placeholder="Name">
+</div>
+
+<div class="col-md-3">
+<input id="dept" class="form-control" placeholder="Department">
+</div>
+
+<div class="col-md-2">
+<input id="salary" type="number" class="form-control" placeholder="Monthly Salary">
+</div>
+
+<div class="col-md-2">
+<button class="btn btn-primary w-100" onclick="addEmp()">Add</button>
+</div>
+
+<div class="col-md-2">
+<input id="search" onkeyup="display()" class="form-control" placeholder="Search">
+</div>
+
+</div>
+
+</div>
+
+<!-- TABLE -->
+<div class="box">
+
+<h5>Employee Records</h5>
+
+<div class="table-responsive">
+
+<table class="table table-bordered table-striped mt-2">
+<thead class="table-dark">
+<tr>
+<th>Name</th>
+<th>Dept</th>
+<th>Salary</th>
+<th>Present Days</th>
+<th>Daily Pay</th>
+<th>Attendance</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody id="table"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let employees = JSON.parse(localStorage.getItem("employees")) || [];
+
+display();
+
+function addEmp(){
+
+    let name = document.getElementById("name").value;
+    let dept = document.getElementById("dept").value;
+    let salary = document.getElementById("salary").value;
+
+    if(name=="" || dept=="" || salary==""){
+        alert("Fill all fields");
+        return;
+    }
+
+    let emp = {
+        name,
+        dept,
+        salary: Number(salary),
+        presentDays:0
+    };
+
+    employees.push(emp);
+
+    save();
+    clear();
+    display();
+}
+
+// 🔥 Toggle Attendance
+function toggleAttendance(i){
+
+    employees[i].presentDays += 1;
+
+    save();
+    display();
+}
+
+// ❌ Reset Absence
+function markAbsent(i){
+    if(employees[i].presentDays > 0){
+        employees[i].presentDays -= 1;
+    }
+    save();
+    display();
+}
+
+// ✏️ EDIT EMPLOYEE
+function editEmp(i){
+
+    let name = prompt("Enter Name", employees[i].name);
+    let dept = prompt("Enter Dept", employees[i].dept);
+    let salary = prompt("Enter Salary", employees[i].salary);
+
+    if(name && dept && salary){
+
+        employees[i].name = name;
+        employees[i].dept = dept;
+        employees[i].salary = Number(salary);
+
+        save();
+        display();
+    }
+}
+
+// ❌ DELETE
+function del(i){
+    employees.splice(i,1);
+    save();
+    display();
+}
+
+// 🔍 SEARCH + DISPLAY
+function display(){
+
+    let table = document.getElementById("table");
+    table.innerHTML = "";
+
+    let search = document.getElementById("search").value.toLowerCase();
+
+    let totalSalary = 0;
+    let present = 0;
+    let absent = 0;
+
+    employees.forEach((e,i)=>{
+
+        let dailyPay = e.salary / 30;
+        let earned = dailyPay * e.presentDays;
+
+        if(e.presentDays > 0) present++;
+        else absent++;
+
+        totalSalary += earned;
+
+        if(e.name.toLowerCase().includes(search) || e.dept.toLowerCase().includes(search)){
+
+        table.innerHTML += `
+        <tr>
+            <td>${e.name}</td>
+            <td>${e.dept}</td>
+            <td>₹${e.salary}</td>
+            <td>${e.presentDays}</td>
+            <td>₹${earned.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-success btn-sm" onclick="toggleAttendance(${i})">Present</button>
+                <button class="btn btn-warning btn-sm" onclick="markAbsent(${i})">Absent</button>
+            </td>
+            <td>
+                <button class="btn btn-info btn-sm" onclick="editEmp(${i})">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="del(${i})">Delete</button>
+            </td>
+        </tr>
+        `;
+        }
+    });
+
+    document.getElementById("empCount").innerText = employees.length;
+    document.getElementById("totalSalary").innerText = "₹" + totalSalary.toFixed(2);
+    document.getElementById("presentCount").innerText = present;
+    document.getElementById("absentCount").innerText = absent;
+}
+
+function save(){
+    localStorage.setItem("employees", JSON.stringify(employees));
+}
+
+function clear(){
+    document.getElementById("name").value="";
+    document.getElementById("dept").value="";
+    document.getElementById("salary").value="";
+}
+
+</script>
+
+</body>
+</html>
